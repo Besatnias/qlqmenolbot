@@ -1,2 +1,2 @@
-# nogubot
-Nogu!
+# qlqmenolbot
+¿Qlq menol?
