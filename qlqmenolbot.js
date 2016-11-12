@@ -1,7 +1,7 @@
 'use strict';
 var TelegramBot = require('node-telegram-bot-api');
 var token = process.env.TOKEN;
-var bot = new TelegramBot(token, { polling: false });
+var bot = new TelegramBot(token, { polling: true });
 var request = require('request');
 var cheerio = require('cheerio');
 var fs = require('fs');
