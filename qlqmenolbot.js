@@ -1,7 +1,7 @@
 'use strict';
 
 // Bot modules
-var token = '268544173:AAHD0cbv4Svt0UAh-ZMWoEj9BfjRcBW-riU';
+var token = process.env.TOKEN;
 var Tgfancy = require('tgfancy');
 const bot = new Tgfancy(token, { polling: true });
 
@@ -12,7 +12,7 @@ var fs = require('fs');
 var translate = require('node-google-translate-skidz');
 
 // DB modules
-var uri = 'mongodb://localhost/telegram';
+var uri = '/data/db';
 var mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect(uri);
