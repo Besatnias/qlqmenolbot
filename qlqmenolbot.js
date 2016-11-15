@@ -22,7 +22,7 @@ var stickerSchema = mongoose.Schema({
     stickerKeyword: String,
     stickerId: String,
     userId: String,
-    userName: String
+    userName: Number
 });
 
 stickerSchema.methods.idTest = function() {
@@ -88,24 +88,40 @@ bot.on('message', function (msg) {
     }
 });
 
-//Sticker puller
+// Sticker puller
 bot.onText(/^!/, function (msg) {
     var kw = msg.text.substring(1, msg.text.length);
     console.log("kw is '" + kw + "'");
     Sticker.find({stickerKeyword: kw}, (err, result) => {
         if (err) {
             console.log(err);
-            bot.sendMessage(msg.chat.id, 'Hmm, it seems I cannot find that sticker.')
+            bot.sendMessage(msg.chat.id, 'ERROR! I AM DEAD! k maybe not')
         } else if (result[0] !== undefined) {
-            if (result[0].stickerId !== undefined) {
+            if (result[0].stickerId !== undefined && result[0].userId === msg.from.id) {
                 bot.sendSticker(msg.chat.id, result[0].stickerId)
             } else {
-                bot.sendMessage(msg.chat.id, 'Hmm, it seems I cannot find that sticker.')
+                bot.sendMessage(msg.chat.id, 'No encuentro ese sticker en tu colección.')
             }
         } else {
-            bot.sendMessage(msg.chat.id, 'Hmm, it seems I cannot find that sticker.')
+            bot.sendMessage(msg.chat.id, 'Parece que ese sticker no existe en mi base de datos.')
         }
     });
+});
+
+// Delete sticker
+bot.on('message', function (msg) {
+    if (msg.entities) {
+        if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/delsticker')) {
+            var command = msg.text.substring(msg.text.search("\/"), msg.text.search(" "));
+            var keyword = msg.text.substring(command.length + 1, msg.text.length);
+            var kw = [];
+            if (keyword.length <= 50 && keyword.substring(0, 1) == '!') {
+                kw.push(msg.text.substring(msg.text.search("!") + 1));
+                Sticker.find({stickerKeyword: kw[0], userId: msg.from.id}).remove().exec();
+                bot.sendMessage(msg.chat.id, 'If that keyword was in your personal collection, I deleted it.')
+            }
+        }
+    }
 });
 
 bot.on('message', function (msg) {
