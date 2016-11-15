@@ -12,7 +12,7 @@ var fs = require('fs');
 var translate = require('node-google-translate-skidz');
 
 // DB modules
-var uri = '/data/db';
+var uri = 'mongodb://localhost/telegram';
 var mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect(uri);
@@ -36,6 +36,7 @@ var Sticker = mongoose.model('Sticker', stickerSchema);
 
 // Sticker adder on query
 bot.on('message', function (msg) {
+    console.log(typeof msg.from.id);
     if (msg.entities) {
         if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/addsticker')) {
             var command = msg.text.substring(msg.text.search("\/"), msg.text.search(" "));
@@ -46,7 +47,7 @@ bot.on('message', function (msg) {
             if (keyword.length <= 50 && keyword.substring(0, 1) == '!') {
                 if (!stickerer.includes(msg.from.id)) {
                     stickerer.push(msg.from.id);
-                    Sticker.find({stickerKeyword: kw[0]}, function (err, result) {
+                    Sticker.find({stickerKeyword: kw[0], userId: msg.from.id}, function (err, result) {
                         if (result[0] === undefined) {
                             bot.sendMessage(msg.chat.id, 'Now send me the sticker you want me to add that keyword to.');
                             bot.on('message', (msg) => {
@@ -58,9 +59,9 @@ bot.on('message', function (msg) {
                                         stickerKeyword: kw[0],
                                         stickerId: msg.sticker.file_id,
                                         userId: msg.from.id,
-                                        userName: msg.from.first_name
+                                        userName: msg.from.username
                                     });
-                                    stickerToSave.save(function (err) {
+                                    stickerToSave.save(function (err, savedSticker) {
                                         if (err) {
                                             console.log(err);
                                         } else {
@@ -92,18 +93,18 @@ bot.on('message', function (msg) {
 bot.onText(/^!/, function (msg) {
     var kw = msg.text.substring(1, msg.text.length);
     console.log("kw is '" + kw + "'");
-    Sticker.find({stickerKeyword: kw}, (err, result) => {
+    Sticker.find({stickerKeyword: kw, userId: msg.from.id}, (err, result) => {
         if (err) {
             console.log(err);
             bot.sendMessage(msg.chat.id, 'ERROR! I AM DEAD! k maybe not')
         } else if (result[0] !== undefined) {
-            if (result[0].stickerId !== undefined && result[0].userId === msg.from.id) {
+            if (result[0].stickerId !== undefined) {
                 bot.sendSticker(msg.chat.id, result[0].stickerId)
             } else {
                 bot.sendMessage(msg.chat.id, 'No encuentro ese sticker en tu colección.')
             }
         } else {
-            bot.sendMessage(msg.chat.id, 'Parece que ese sticker no existe en mi base de datos.')
+            bot.sendMessage(msg.chat.id, 'No encuentro ese sticker en tu colección.')
         }
     });
 });
