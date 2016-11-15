@@ -21,8 +21,8 @@ mongoose.connect(uri);
 var stickerSchema = mongoose.Schema({
     stickerKeyword: String,
     stickerId: String,
-    userId: String,
-    userName: Number
+    userId: Number,
+    userName: String
 });
 
 stickerSchema.methods.idTest = function() {
