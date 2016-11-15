@@ -1,11 +1,112 @@
 'use strict';
-var token = process.env.TOKEN;
+
+// Bot modules
+var token = '268544173:AAHD0cbv4Svt0UAh-ZMWoEj9BfjRcBW-riU';
 var Tgfancy = require('tgfancy');
 const bot = new Tgfancy(token, { polling: true });
+
+// HTTP modules
 var request = require('request');
 var cheerio = require('cheerio');
 var fs = require('fs');
 var translate = require('node-google-translate-skidz');
+
+// DB modules
+var uri = 'mongodb://localhost/telegram';
+var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+mongoose.connect(uri);
+
+// Mongoose sticker adder requirements
+var stickerSchema = mongoose.Schema({
+    stickerKeyword: String,
+    stickerId: String,
+    userId: String,
+    userName: String
+});
+
+stickerSchema.methods.idTest = function() {
+    var idTest = this.stickerId
+        ? "The ID of this sticker is " + this.stickerId
+        : "It seems like this keyword is matched with no sticker";
+    console.log(idTest);
+};
+
+var Sticker = mongoose.model('Sticker', stickerSchema);
+
+// Sticker adder on query
+bot.on('message', function (msg) {
+    if (msg.entities) {
+        if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/addsticker')) {
+            var command = msg.text.substring(msg.text.search("\/"), msg.text.search(" "));
+            var keyword = msg.text.substring(command.length + 1, msg.text.length);
+            var kw = [];
+            var stickerer = [];
+            kw.push(msg.text.substring(msg.text.search("!") + 1));
+            if (keyword.length <= 50 && keyword.substring(0, 1) == '!') {
+                if (!stickerer.includes(msg.from.id)) {
+                    stickerer.push(msg.from.id);
+                    Sticker.find({stickerKeyword: kw[0]}, function (err, result) {
+                        if (result[0] === undefined) {
+                            bot.sendMessage(msg.chat.id, 'Now send me the sticker you want me to add that keyword to.');
+                            bot.on('message', (msg) => {
+                                if (msg.sticker && stickerer.includes(msg.from.id)) {
+                                    stickerer.splice(stickerer.indexOf(msg.from.id), 1);
+                                    kw.splice(1, 1);
+                                    bot.sendMessage(msg.chat.id, "Alright, then I'll assign that keyword to that sticker.");
+                                    var stickerToSave = new Sticker({
+                                        stickerKeyword: kw[0],
+                                        stickerId: msg.sticker.file_id,
+                                        userId: msg.from.id,
+                                        userName: msg.from.first_name
+                                    });
+                                    stickerToSave.save(function (err) {
+                                        if (err) {
+                                            console.log(err);
+                                        } else {
+                                            console.log('adding success');
+                                        }
+                                    });
+                                } else if (stickerer.includes(msg.from.id)){
+                                    stickerer.splice(stickerer.indexOf(msg.from.id), 1);
+                                    kw.splice(1, 1);
+                                    bot.sendMessage(msg.chat.id, "Sadly, that's not a sticker. You'll have to send me a keyword again if you want to retry.")
+                                }
+                            });
+                        } else {
+                            bot.sendMessage(msg.chat.id, 'That keyword already exists.');
+                            kw.splice(kw.indexOf(msg.text.substring(msg.text.search("!") + 1)), 1);
+                            stickerer.splice(stickerer.indexOf(msg.from.id), 1);
+                        }
+                    });
+                }
+            } else {
+                kw.splice(kw.indexOf(msg.text.substring(msg.text.search("!") + 1)), 1);
+                bot.sendMessage(msg.chat.id, 'That keyword is too long or does not start with an exclamation sign (!).')
+            }
+        }
+    }
+});
+
+//Sticker puller
+bot.onText(/^!/, function (msg) {
+    var kw = msg.text.substring(1, msg.text.length);
+    console.log("kw is '" + kw + "'");
+    Sticker.find({stickerKeyword: kw}, (err, result) => {
+        if (err) {
+            console.log(err);
+            bot.sendMessage(msg.chat.id, 'Hmm, it seems I cannot find that sticker.')
+        } else if (result[0] !== undefined) {
+            if (result[0].stickerId !== undefined) {
+                bot.sendSticker(msg.chat.id, result[0].stickerId)
+            } else {
+                bot.sendMessage(msg.chat.id, 'Hmm, it seems I cannot find that sticker.')
+            }
+        } else {
+            bot.sendMessage(msg.chat.id, 'Hmm, it seems I cannot find that sticker.')
+        }
+    });
+});
 
 bot.on('message', function (msg) {
     if (msg.entities) {
