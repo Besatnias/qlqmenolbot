@@ -36,7 +36,6 @@ var Sticker = mongoose.model('Sticker', stickerSchema);
 
 // Sticker adder on query
 bot.on('message', function (msg) {
-    console.log(typeof msg.from.id);
     if (msg.entities) {
         if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/addsticker')) {
             var command = msg.text.substring(msg.text.search("\/"), msg.text.search(" "));
@@ -127,7 +126,6 @@ bot.on('message', function (msg) {
 
 // List all stickers
 bot.on('message', function (msg) {
-    console.log(typeof msg.from.id);
     if (msg.entities) {
         if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/mystickers')) {
             Sticker.find({userId: msg.from.id}, function (err, result) {
