@@ -125,6 +125,23 @@ bot.on('message', function (msg) {
     }
 });
 
+// List all stickers
+bot.on('message', function (msg) {
+    console.log(typeof msg.from.id);
+    if (msg.entities) {
+        if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/mystickers')) {
+            Sticker.find({userId: msg.from.id}, function (err, result) {
+                var text ="";
+                var i;
+                for (i = 0; i<result.length; i++) {
+                    text += "*!*" + result[i].stickerKeyword + " ";
+                }
+                bot.sendMessage(msg.chat.id, 'Las keywords en tu colección son las siguientes:\n' + text, {parse_mode: 'markdown'})
+            });
+        }
+    }
+});
+
 bot.on('message', function (msg) {
     if (msg.entities) {
         if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/dolar')) {
@@ -209,23 +226,6 @@ bot.on('message', function (msg){
 
 bot.on('message', function (msg){
     console.log('FN: ' + msg.from.first_name + " " + "UN: @" + msg.from.username + ': ' + msg.text);
-});
-
-bot.on('message', function (msg) {
-    if (msg.entities) {
-        console.log(msg);
-        if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/quiensoy')) {
-            bot.sendMessage(msg.chat.id, 'Qlq menol tienes amnesia? Háblame cloro ' + msg.from.first_name);
-        }
-    }
-});
-
-bot.onText(/hola/ ,function (msg) {
-    bot.sendMessage(msg.chat.id, 'Qlq ' + msg.from.first_name);
-});
-
-bot.onText(/I'm back/ ,function (msg) {
-    bot.sendMessage(msg.chat.id, 'Back de donde mmg');
 });
 
 /*------------------------  G O O G L E   T R A N S L A T E ----------------------*/
