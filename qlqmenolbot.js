@@ -91,7 +91,7 @@ bot.on('message', function (msg) {
 });
 
 // Sticker puller
-bot.onText(/(^|\s)(!\w+)\b/, function (msg) {
+bot.onText(/(^|\s)(!.+)/, function (msg) {
     if (!msg.entities) {
         var afterSpace = msg.text.substring(msg.text.search("!") + 1, msg.text.length);
         var kwArray = afterSpace.split(' ', 2);
