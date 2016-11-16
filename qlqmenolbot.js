@@ -40,9 +40,11 @@ bot.on('message', function (msg) {
         if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/addsticker')) {
             var command = msg.text.substring(msg.text.search("\/"), msg.text.search(" "));
             var keyword = msg.text.substring(command.length + 1, msg.text.length);
+            var afterSpace = msg.text.substring(msg.text.search("!") + 1, msg.text.length);
+            var kwArray = afterSpace.split(' ', 2);
             var kw = [];
             var stickerer = [];
-            kw.push(msg.text.substring(msg.text.search("!") + 1));
+            kw.push(kwArray[0]);
             if (keyword.length <= 50 && keyword.substring(0, 1) == '!') {
                 if (!stickerer.includes(msg.from.id)) {
                     stickerer.push(msg.from.id);
@@ -89,26 +91,31 @@ bot.on('message', function (msg) {
 });
 
 // Sticker puller
-bot.onText(/^!/, function (msg) {
-    var kw = msg.text.substring(1, msg.text.length);
-    console.log("kw is '" + kw + "'");
-    Sticker.find({stickerKeyword: kw, userId: msg.from.id}, (err, result) => {
-        if (err) {
-            console.log(err);
-            bot.sendMessage(msg.chat.id, 'ERROR! I AM DEAD! k maybe not')
-        } else if (result[0] !== undefined) {
-            if (result[0].stickerId !== undefined) {
-                bot.sendSticker(msg.chat.id, result[0].stickerId)
+bot.onText(/(^|\s)(!\w+)\b/, function (msg) {
+    if (!msg.entities) {
+        var afterSpace = msg.text.substring(msg.text.search("!") + 1, msg.text.length);
+        var kwArray = afterSpace.split(' ', 2);
+        var kwd = kwArray[0];
+        console.log("kwd is '" + kwd + "'");
+        Sticker.find({stickerKeyword: kwd, userId: msg.from.id}, (err, result) => {
+            if (err) {
+                console.log(err);
+                bot.sendMessage(msg.chat.id, 'ERROR! I AM DEAD! k maybe not')
+            } else if (result[0] !== undefined) {
+                if (result[0].stickerId !== undefined) {
+                    bot.sendSticker(msg.chat.id, result[0].stickerId)
+                } else {
+                    bot.sendMessage(msg.chat.id, 'No encuentro ese sticker en tu colección.')
+                }
             } else {
                 bot.sendMessage(msg.chat.id, 'No encuentro ese sticker en tu colección.')
             }
-        } else {
-            bot.sendMessage(msg.chat.id, 'No encuentro ese sticker en tu colección.')
-        }
-    });
+        });
+    }
 });
 
 // Delete sticker
+
 bot.on('message', function (msg) {
     if (msg.entities) {
         if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/delsticker')) {
@@ -124,7 +131,7 @@ bot.on('message', function (msg) {
     }
 });
 
-// List all stickers
+// List own stickers
 bot.on('message', function (msg) {
     if (msg.entities) {
         if (msg.entities[0].type == 'bot_command' && msg.text.startsWith('\/mystickers')) {
